@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>أنمي ستار | Anime Star</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icon.png">
+  <style>
+    * {margin:0;padding:0;box-sizing:border-box;font-family:Arial,sans-serif;}
+    body {background:#0f0f0f;color:#fff;}
+    header {background:linear-gradient(45deg,#ff006e,#8338ec);padding:20px;text-align:center;font-size:28px;font-weight:bold;}
+    #search {width:92%;margin:20px auto;padding:15px;border-radius:50px;border:none;font-size:18px;display:block;}
+    .grid {display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:15px;padding:15px;}
+    .card {background:#1a1a1a;border-radius:12px;overflow:hidden;cursor:pointer;box-shadow:0 4px 10px rgba(0,0,0,0.5);}
+    .card img {width:100%;height:200px;Pulobject-fit:cover;}
+    .card h3 {padding:10px;font-size:14px;text-align:center;background:#111;}
+    #player {position:fixed;top:0;left:0;width:100%;height:100%;background:#000;z-index:999;display:none;}
+    iframe {width:100%;height:100%;border:none;}
+    .close {position:absolute;top:15px;left:15px;font-size:40px;cursor:pointer;z-index:1000;color:#fff;}
+    .loading {text-align:center;padding:50px;font-size:20px;}
+  </style>
+</head>
+<body>
+  <header>أنمي ستار - Anime Star</header>
+  <input type="text" id="search" placeholder="🔍 ابحث عن أنمي..." onkeyup="searchAnime()"/>
+
+  <div class="grid" id="animeGrid">
+    <div class="loading">جاري تحميل الأنمي...</div>
+  </div>
+
+  <div id="player">
+    <div class="close" onclick="closePlayer()">✕</div>
+    <iframe id="videoFrame" allowfullscreen></iframe>
+  </div>
+
+  <script>
+    const animeList = [
+      {title:"ون بيس",img:"https://i.imgur.com/2O6F3sO.jpg",link:"https://vidsrc.me/embed/tt0388629"},
+      {title:"ناروتو شيبودن",img:"https://i.imgur.com/5ZnC5dQ.jpg",link:"https://vidsrc.me/embed/tt0988824"},
+      {title:"هجوم العمالقة",img:"https://i.imgur.com/JlmbZc9.jpg",link:"https://vidsrc.me/embed/tt2560140"},
+      {title:"قاتل الشياطين",img:"https://i.imgur.com/5f1h1fP.jpg",link:"https://vidsrc.me/embed/tt9335498"},
+      {title:"جوجوتسو كايسن",img:"https://i.imgur.com/QN9wLH6.jpg",link:"https://vidsrc.me/embed/tt12343534"},
+      {title:"دراغون بول زد",img:"https://i.imgur.com/8e9l3sE.jpg",link:"https://vidsrc.me/embed/tt0214341"},
+      {title:"بليتش",img:"https://i.imgur.com/4p8K0Qt.jpg",link:"https://vidsrc.me/embed/tt0434665"},
+      {title:"ديث نوت",img:"https://i.imgur.com/5f1h1fP.jpg",link:"https://vidsrc.me/embed/tt0877057"},
+      {title:"ون بنش مان",img:"https://i.imgur.com/X2v2Q0b.jpg",link:"https://vidsrc.me/embed/tt4508902"},
+      {title:"طوكيو غول",img:"https://i.imgur.com/5f1h1fP.jpg",link:"https://vidsrc.me/embed/tt3743822"},
+      // أضف كل الأنمي الذي تريده هنا بنفس الصيغة
+    ];
+
+    function showAnime(list = animeList) {
+      const grid = document.getElementById("animeGrid");
+      grid.innerHTML = "";
+      if (list.length === 0) {
+        grid.innerHTML = "<div class='loading'>لا يوجد أنمي بهذا الاسم 😢</div>";
+        return;
+      }
+      list.forEach(a => {
+        grid.innerHTML += `
+          <div class="card" onclick="play('${a.link}')">
+            <img src="${a.img}" alt="${a.title}">
+            <h3>${a.title}</h3>
+          </div>
+        `;
+      });
+    }
+
+    function play(link) {
+      document.getElementById("videoFrame").src = link;
+      document.getElementById("player").style.display = "block";
+    }
+
+    function closePlayer() {
+      document.getElementById("player").style.display = "none";
+      document.getElementById("videoFrame").src = "";
+    }
+
+    function searchAnime() {
+      const term = document.getElementById("search").value.trim();
+      if (!term) { showAnime(); return; }
+      const filtered = animeList.filter(a => 
+        a.title.includes(term) || term.includes(a.title)
+      );
+      showAnime(filtered);
+    }
+
+    // تحميل عند الفتح
+    showAnime();
+  </script>
+</body>
+</html>
