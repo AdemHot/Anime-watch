@@ -2,10 +2,10 @@ name: Build Android APK
 
 on:
   push:
-    branches: [ main ]  # يبني عند كل push إلى main (غيّر إذا لزم)
+    branches: [ main ]  # أو 'master' لو فرعك كده
   pull_request:
     branches: [ main ]
-  workflow_dispatch:  # يسمح بتشغيل يدوي من GitHub UI
+  workflow_dispatch:  # للتشغيل اليدوي
 
 jobs:
   build:
@@ -14,6 +14,8 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # مهم للوصول للتاريخ الكامل
 
     - name: Setup Node.js
       uses: actions/setup-node@v4
@@ -27,7 +29,7 @@ jobs:
         npm install -g @capacitor/cli
 
     - name: Build web assets
-      run: npm run build  # إذا كان لديك build script، غيّره
+      run: npm run build  # لو مفيش build، سيبه كده
 
     - name: Setup Capacitor Android
       run: |
@@ -43,24 +45,37 @@ jobs:
     - name: Build APK
       run: |
         cd android
-        ./gradlew assembleDebug  # لبناء APK غير موقع (debug). غيّر إلى assembleRelease للموقّع
+        ./gradlew assembleDebug  # للـ debug APK
 
-    - name: Upload APK
+    - name: Upload APK as Artifact
       uses: actions/upload-artifact@v4
       with:
         name: anime-app-debug.apk
         path: android/app/build/outputs/apk/debug/app-debug.apk
-        retention-days: 30  # يحتفظ بالملف 30 يومًا
+        retention-days: 30
 
-    - name: Create Release (اختياري)
-      if: github.ref == 'refs/heads/main'  # فقط عند push إلى main
+    # خطوات جديدة لإنشاء Tag و Release (الحل للمشكلة!)
+    - name: Create Tag
+      id: tag
+      if: github.ref == 'refs/heads/main'  # فقط على main
+      uses: actions/create-tag@v1  # action جديدة لإنشاء الـ tag أولًا
+      with:
+        tag: v${{ github.run_number }}  # مثل v1, v2... (رقم الـ workflow)
+        message: "Release v${{ github.run_number }} - APK جاهز!"
+        force: false  # لو عايز تكتب فوق tag قديم، غيّره لـ true
+
+    - name: Create Release
+      if: github.ref == 'refs/heads/main'
       uses: actions/create-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: v${{ github.run_number }}
+        tag_name: ${{ steps.tag.outputs.tag }}  # استخدم الـ tag اللي اتولد
         release_name: Release v${{ github.run_number }}
-        body: APK جديد جاهز للتحميل!
+        body: |
+          APK جديد جاهز للتحميل!
+          - تم بناء التطبيق بنجاح.
+          - تحميل: [app-debug.apk](https://github.com/${{ github.repository }}/releases/download/${{ steps.tag.outputs.tag }}/anime-app-debug.apk)
         draft: false
         prerelease: false
 
@@ -70,7 +85,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        upload_url: ${{ steps.create-release.outputs.upload_url }}
         asset_path: android/app/build/outputs/apk/debug/app-debug.apk
         asset_name: anime-app-debug.apk
         asset_content_type: application/vnd.android.package-archive
