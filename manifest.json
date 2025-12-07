@@ -1,0 +1,16 @@
+{
+  "name": "أنمي ستار",
+  "short_name": "AnimeStar",
+  "description": "تطبيق مشاهدة أنمي بدون إعلانات",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#0f0f0f",
+  "theme_color": "#ff006e",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
