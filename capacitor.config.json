@@ -1,0 +1,6 @@
+{
+  "appId": "com.anime.star",
+  "appName": "أنمي ستار",
+  "webDir": ".",
+  "bundledWebRuntime": false
+}
