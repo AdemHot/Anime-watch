@@ -1,0 +1,76 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ main ]  # يبني عند كل push إلى main (غيّر إذا لزم)
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:  # يسمح بتشغيل يدوي من GitHub UI
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: |
+        npm ci
+        npm install -g @capacitor/cli
+
+    - name: Build web assets
+      run: npm run build  # إذا كان لديك build script، غيّره
+
+    - name: Setup Capacitor Android
+      run: |
+        npx cap add android
+        npx cap sync android
+
+    - name: Setup Java
+      uses: actions/setup-java@v4
+      with:
+        distribution: 'zulu'
+        java-version: '17'
+
+    - name: Build APK
+      run: |
+        cd android
+        ./gradlew assembleDebug  # لبناء APK غير موقع (debug). غيّر إلى assembleRelease للموقّع
+
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: anime-app-debug.apk
+        path: android/app/build/outputs/apk/debug/app-debug.apk
+        retention-days: 30  # يحتفظ بالملف 30 يومًا
+
+    - name: Create Release (اختياري)
+      if: github.ref == 'refs/heads/main'  # فقط عند push إلى main
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{ github.run_number }}
+        release_name: Release v${{ github.run_number }}
+        body: APK جديد جاهز للتحميل!
+        draft: false
+        prerelease: false
+
+    - name: Upload APK to Release
+      if: github.ref == 'refs/heads/main'
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: android/app/build/outputs/apk/debug/app-debug.apk
+        asset_name: anime-app-debug.apk
+        asset_content_type: application/vnd.android.package-archive
